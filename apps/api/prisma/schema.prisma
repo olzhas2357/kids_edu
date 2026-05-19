@@ -1,0 +1,376 @@
+// Educational platform schema — optimized for dashboard queries & horizontal scaling
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  TEACHER
+  STUDENT
+  ADMIN
+}
+
+enum PracticeTaskLevel {
+  A
+  B
+  C
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LearningStep {
+  THEORY
+  VIDEO
+  PRACTICE_A
+  PRACTICE_B
+  PRACTICE_C
+  TEST
+  COMPLETED
+}
+
+enum TestAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  TEXT
+}
+
+enum AIChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AIFeedbackType {
+  HINT
+  EXPLANATION
+  CORRECTION
+  ENCOURAGEMENT
+  SUMMARY
+}
+
+// ─── Users & Auth ────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  displayName  String   @map("display_name") @db.VarChar(120)
+  role         Role
+  avatarUrl    String?  @map("avatar_url") @db.VarChar(512)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  courses         Course[]             @relation("CourseTeacher")
+  studentProgress StudentProgress[]
+  testAttempts    StudentTestAttempt[]
+  studentAnswers  StudentAnswer[]      @relation("AnswerStudent")
+  aiChatLogs      AIChatLog[]
+  aiFeedbacks     AIFeedback[]
+  refreshTokens   RefreshToken[]
+
+  @@index([role, isActive])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  jti       String    @unique @db.Uuid
+  tokenHash String    @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ─── Curriculum ──────────────────────────────────────────────────────────────
+
+model Course {
+  id          String    @id @default(uuid()) @db.Uuid
+  teacherId   String    @map("teacher_id") @db.Uuid
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  slug        String    @unique @db.VarChar(120)
+  isPublished Boolean   @default(false) @map("is_published")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  teacher         User              @relation("CourseTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  topics          Topic[]
+  studentProgress StudentProgress[]
+
+  @@index([teacherId, isPublished])
+  @@index([isPublished, createdAt(sort: Desc)])
+  @@index([teacherId, updatedAt(sort: Desc)])
+  @@map("courses")
+}
+
+model Topic {
+  id          String   @id @default(uuid()) @db.Uuid
+  courseId    String   @map("course_id") @db.Uuid
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  orderIndex  Int      @default(0) @map("order_index")
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  course          Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  theoryContent   TheoryContent?
+  videos          Video[]
+  practiceTasks   PracticeTask[]
+  tests           Test[]
+  studentProgress StudentProgress[]
+  aiChatLogs      AIChatLog[]
+  aiFeedbacks     AIFeedback[]
+
+  @@unique([courseId, orderIndex])
+  @@index([courseId, isPublished, orderIndex])
+  @@index([courseId, updatedAt(sort: Desc)])
+  @@map("topics")
+}
+
+model TheoryContent {
+  id        String   @id @default(uuid()) @db.Uuid
+  topicId   String   @unique @map("topic_id") @db.Uuid
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@map("theory_contents")
+}
+
+model Video {
+  id              String   @id @default(uuid()) @db.Uuid
+  topicId         String   @map("topic_id") @db.Uuid
+  title           String   @db.VarChar(200)
+  url             String   @db.VarChar(512)
+  thumbnailUrl    String?  @map("thumbnail_url") @db.VarChar(512)
+  durationSeconds Int?     @map("duration_seconds")
+  orderIndex      Int      @default(0) @map("order_index")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId, orderIndex])
+  @@map("videos")
+}
+
+model PracticeTask {
+  id         String            @id @default(uuid()) @db.Uuid
+  topicId    String            @map("topic_id") @db.Uuid
+  title      String            @db.VarChar(200)
+  prompt     String            @db.Text
+  linkUrl    String?           @map("link_url") @db.VarChar(512)
+  level      PracticeTaskLevel
+  orderIndex Int               @default(0) @map("order_index")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  aiFeedbacks AIFeedback[]
+
+  @@unique([topicId, level])
+  @@index([topicId, orderIndex])
+  @@index([topicId, level])
+  @@map("practice_tasks")
+}
+
+// ─── Assessment ──────────────────────────────────────────────────────────────
+
+model Test {
+  id               String   @id @default(uuid()) @db.Uuid
+  topicId          String   @map("topic_id") @db.Uuid
+  title            String   @db.VarChar(200)
+  description      String?  @db.Text
+  passingScore     Int      @default(70) @map("passing_score")
+  timeLimitMinutes Int?     @map("time_limit_minutes")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  topic     Topic                @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions TestQuestion[]
+  attempts  StudentTestAttempt[]
+
+  @@index([topicId])
+  @@map("tests")
+}
+
+model TestQuestion {
+  id            String       @id @default(uuid()) @db.Uuid
+  testId        String       @map("test_id") @db.Uuid
+  questionText  String       @map("question_text") @db.Text
+  type          QuestionType
+  options       Json?
+  correctAnswer Json         @map("correct_answer")
+  explanation   String?      @db.Text
+  points        Int          @default(1)
+  orderIndex    Int          @default(0) @map("order_index")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  test    Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers StudentAnswer[]
+
+  @@index([testId, orderIndex])
+  @@map("test_questions")
+}
+
+model StudentTestAttempt {
+  id            String            @id @default(uuid()) @db.Uuid
+  studentId     String            @map("student_id") @db.Uuid
+  testId        String            @map("test_id") @db.Uuid
+  attemptNumber Int               @default(1) @map("attempt_number")
+  status        TestAttemptStatus @default(IN_PROGRESS)
+  score         Decimal?          @db.Decimal(5, 2)
+  maxScore      Int?              @map("max_score")
+  startedAt     DateTime          @default(now()) @map("started_at")
+  submittedAt   DateTime?         @map("submitted_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  student User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  test    Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers StudentAnswer[]
+
+  @@unique([studentId, testId, attemptNumber])
+  @@index([studentId, status, updatedAt(sort: Desc)])
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([testId, studentId])
+  @@map("student_test_attempts")
+}
+
+model StudentAnswer {
+  id           String   @id @default(uuid()) @db.Uuid
+  attemptId    String   @map("attempt_id") @db.Uuid
+  questionId   String   @map("question_id") @db.Uuid
+  studentId    String   @map("student_id") @db.Uuid
+  answer       Json
+  isCorrect    Boolean? @map("is_correct")
+  pointsEarned Int      @default(0) @map("points_earned")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  attempt   StudentTestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question  TestQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  student   User               @relation("AnswerStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  feedbacks AIFeedback[]
+
+  @@unique([attemptId, questionId])
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([attemptId])
+  @@map("student_answers")
+}
+
+// ─── AI ──────────────────────────────────────────────────────────────────────
+
+model AIChatLog {
+  id        String     @id @default(uuid()) @db.Uuid
+  studentId String     @map("student_id") @db.Uuid
+  topicId   String?    @map("topic_id") @db.Uuid
+  sessionId String     @map("session_id") @db.Uuid
+  role      AIChatRole
+  content   String     @db.Text
+  metadata  Json?
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  student   User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic     Topic?       @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  feedbacks AIFeedback[]
+
+  @@index([studentId, sessionId, createdAt])
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([topicId, createdAt(sort: Desc)])
+  @@map("ai_chat_logs")
+}
+
+model AIFeedback {
+  id              String         @id @default(uuid()) @db.Uuid
+  studentId       String         @map("student_id") @db.Uuid
+  topicId         String?        @map("topic_id") @db.Uuid
+  type            AIFeedbackType
+  content         String         @db.Text
+  aiChatLogId     String?        @map("ai_chat_log_id") @db.Uuid
+  studentAnswerId String?        @map("student_answer_id") @db.Uuid
+  practiceTaskId  String?        @map("practice_task_id") @db.Uuid
+  metadata        Json?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  student       User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic         Topic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  aiChatLog     AIChatLog?     @relation(fields: [aiChatLogId], references: [id], onDelete: SetNull)
+  studentAnswer StudentAnswer? @relation(fields: [studentAnswerId], references: [id], onDelete: SetNull)
+  practiceTask  PracticeTask?  @relation(fields: [practiceTaskId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, createdAt(sort: Desc)])
+  @@index([studentId, type])
+  @@index([topicId, createdAt(sort: Desc)])
+  @@map("ai_feedbacks")
+}
+
+// ─── Progress ────────────────────────────────────────────────────────────────
+
+model StudentProgress {
+  id                 String         @id @default(uuid()) @db.Uuid
+  studentId          String         @map("student_id") @db.Uuid
+  courseId           String         @map("course_id") @db.Uuid
+  topicId            String         @map("topic_id") @db.Uuid
+  status             ProgressStatus @default(NOT_STARTED)
+  progressPercent    Int            @default(0) @map("progress_percent")
+  isLocked           Boolean        @default(true) @map("is_locked")
+  currentStep        LearningStep   @default(THEORY) @map("current_step")
+  theoryCompleted    Boolean        @default(false) @map("theory_completed")
+  videoCompleted     Boolean        @default(false) @map("video_completed")
+  practiceACompleted Boolean        @default(false) @map("practice_a_completed")
+  practiceBCompleted Boolean        @default(false) @map("practice_b_completed")
+  practiceCCompleted Boolean        @default(false) @map("practice_c_completed")
+  testCompleted      Boolean        @default(false) @map("test_completed")
+  lastTestScore      Decimal?       @map("last_test_score") @db.Decimal(5, 2)
+  retryRecommended   Boolean        @default(false) @map("retry_recommended")
+  completedAt        DateTime?        @map("completed_at")
+  lastAccessedAt     DateTime       @default(now()) @map("last_accessed_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, topicId])
+  @@index([studentId, lastAccessedAt(sort: Desc)])
+  @@index([studentId, courseId, status])
+  @@index([studentId, status, updatedAt(sort: Desc)])
+  @@index([courseId, status])
+  @@map("student_progress")
+}
