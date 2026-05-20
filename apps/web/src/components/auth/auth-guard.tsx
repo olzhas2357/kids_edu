@@ -16,11 +16,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [status, router]);
 
-  if (status === 'idle' || status === 'loading') {
+  if (status === 'loading') {
     return <PageLoading label="Checking session" />;
   }
 
-  if (!isAuthenticated) {
+  if (status === 'idle' || !isAuthenticated) {
     return <PageLoading label="Redirecting to login" />;
   }
 

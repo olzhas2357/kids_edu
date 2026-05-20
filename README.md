@@ -8,7 +8,7 @@ Monorepo: Next.js 15 + NestJS + PostgreSQL + Prisma.
 pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-docker compose up postgres -d
+docker compose up -d   # postgres (+ redis optional; set REDIS_ENABLED=true in apps/api/.env)
 pnpm db:generate && pnpm db:migrate && pnpm db:seed
 pnpm dev
 ```
@@ -18,6 +18,16 @@ pnpm dev
 | Web | http://localhost:3000 |
 | API | http://localhost:3001/api/v1 |
 | Swagger | http://localhost:3001/docs |
+
+## Production
+
+See **[docs/PRODUCTION.md](docs/PRODUCTION.md)** — Docker, nginx, CI/CD, Redis, monitoring, checklist, OpenAI cost tips.
+
+```bash
+cp .env.production.example .env
+./deploy/scripts/validate-env.sh .env
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ## Test users (password: `Test1234!`)
 
@@ -44,6 +54,20 @@ pnpm dev
 | GET/POST/PATCH/DELETE | `/topics/:topicId/test` | Final test |
 | POST/PATCH/DELETE | `/topics/:topicId/test/questions/:id?` | Test questions |
 
+## Teacher Analytics (`/api/v1/teacher/courses/:courseId/analytics`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/dashboard` | Full dashboard (KPIs, charts, AI risk) |
+| GET | `/summary` | Average score, pass rate, attempts |
+| GET | `/topics/difficult` | Hardest topics |
+| GET | `/students/weak` | Students needing help |
+| GET | `/charts/progress` | Chart.js-ready progress data |
+| GET | `/charts/attempts` | Attempts time series + by status |
+| GET | `/ai-risk` | Anti-cheat + weak AI performance risk |
+
+Query: `?days=30` for time-series charts.
+
 ## Student API (`/api/v1/student`, role: STUDENT)
 
 Learning flow: theory → video → practice A/B/C → test → AI feedback.
@@ -55,9 +79,14 @@ Learning flow: theory → video → practice A/B/C → test → AI feedback.
 | POST | `/courses/:courseId/enroll` | Init progress |
 | GET | `/topics/:topicId` | Open topic content |
 | POST | `/topics/:topicId/steps/theory\|video\|practice/:level/complete` | Step progress |
-| POST | `/topics/:topicId/test/start` | Start attempt |
-| POST | `/topics/:topicId/test/attempts/:id/answers/:qid` | Submit answer |
-| POST | `/topics/:topicId/test/attempts/:id/submit` | Grade, unlock if ≥85% |
+| POST | `/topics/:topicId/test/start` | Start/resume MC test (5×4) |
+| GET | `/topics/:topicId/test/attempts/:id/session` | Session + timer + saved answers |
+| POST | `.../answers/:qid` | Autosave one answer |
+| POST | `.../autosave` | Batch autosave |
+| POST | `.../events` | Anti-cheat (`tab_blur`, `paste`) |
+| POST | `.../submit` | Score + AI feedback + unlock |
+| GET | `/topics/:topicId/test/history` | Attempt history |
+| GET | `.../attempts/:id/result` | Single result |
 | POST | `/topics/:topicId/retry` | Retry test |
 | GET | `/topics/:topicId/result` | Result + recommendation |
 

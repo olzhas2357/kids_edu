@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserRole, WEB_ROUTES } from '@edu-platform/shared';
 import { authApi } from '@/lib/api';
@@ -10,13 +10,22 @@ import { useAuthStore } from '@/stores';
 export function useAuth() {
   const router = useRouter();
   const { user, status, isAuthenticated, setUser, clearAuth, setLoading } = useAuthStore();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const response = await authApi.login({ email, password });
-      setUser(response.user);
-      router.push(getHomeRouteForRole(response.user.role));
-      return response.user;
+      setIsLoggingIn(true);
+      try {
+        const data = await authApi.login({ email, password });
+        if (!data?.user?.id) {
+          throw new Error('Invalid login response from server');
+        }
+        setUser(data.user);
+        router.push(getHomeRouteForRole(data.user.role));
+        return data.user;
+      } finally {
+        setIsLoggingIn(false);
+      }
     },
     [router, setUser],
   );
@@ -54,7 +63,10 @@ export function useAuth() {
     user,
     status,
     isAuthenticated,
-    isLoading: status === 'loading' || status === 'idle',
+    /** Session check on protected pages only */
+    isSessionLoading: status === 'loading',
+    /** Login form submit in progress */
+    isLoggingIn,
     login,
     logout,
     refreshSession,

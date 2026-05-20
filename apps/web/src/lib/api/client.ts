@@ -40,26 +40,56 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const { params, body, headers, skipAuthRedirect, ...rest } = config;
 
-  const response = await fetch(buildUrl(path, params), {
-    method,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    ...rest,
-  });
+  const controller = new AbortController();
+  const timeoutMs = 15_000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, params), {
+      method,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+      ...rest,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ApiError(
+        `Request timed out after ${timeoutMs / 1000}s. Is the API running on port 3001?`,
+        0,
+      );
+    }
+    if (error instanceof TypeError) {
+      throw new ApiError(
+        'Cannot reach API. Run: pnpm --filter @edu-platform/api dev',
+        0,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const payload = await parseBody<ApiSuccessResponse<T> | { message?: string; code?: string }>(
     response,
   );
 
   if (!response.ok) {
-    const message =
-      (payload as { message?: string }).message ??
-      `Request failed (${response.status})`;
-    const code = (payload as { code?: string }).code;
+    const errBody = payload as {
+      message?: string | string[];
+      code?: string;
+      error?: { message?: string };
+    };
+    const rawMessage = errBody.message ?? errBody.error?.message;
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join(', ')
+      : (rawMessage ?? `Request failed (${response.status})`);
+    const code = errBody.code;
 
     if (response.status === 401 && !skipAuthRedirect && typeof window !== 'undefined') {
       const isAuthPage = window.location.pathname.startsWith('/login');

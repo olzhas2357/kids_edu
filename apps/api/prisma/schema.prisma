@@ -43,6 +43,7 @@ enum TestAttemptStatus {
   IN_PROGRESS
   SUBMITTED
   GRADED
+  TIMED_OUT
 }
 
 enum QuestionType {
@@ -209,14 +210,17 @@ model PracticeTask {
 // ─── Assessment ──────────────────────────────────────────────────────────────
 
 model Test {
-  id               String   @id @default(uuid()) @db.Uuid
-  topicId          String   @map("topic_id") @db.Uuid
-  title            String   @db.VarChar(200)
-  description      String?  @db.Text
-  passingScore     Int      @default(70) @map("passing_score")
-  timeLimitMinutes Int?     @map("time_limit_minutes")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid()) @db.Uuid
+  topicId            String   @map("topic_id") @db.Uuid
+  title              String   @db.VarChar(200)
+  description        String?  @db.Text
+  passingScore       Int      @default(70) @map("passing_score")
+  timeLimitMinutes   Int?     @map("time_limit_minutes")
+  maxAttempts        Int      @default(3) @map("max_attempts")
+  questionCount      Int      @default(5) @map("question_count")
+  choicesPerQuestion Int      @default(4) @map("choices_per_question")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   topic     Topic                @relation(fields: [topicId], references: [id], onDelete: Cascade)
   questions TestQuestion[]
@@ -247,17 +251,24 @@ model TestQuestion {
 }
 
 model StudentTestAttempt {
-  id            String            @id @default(uuid()) @db.Uuid
-  studentId     String            @map("student_id") @db.Uuid
-  testId        String            @map("test_id") @db.Uuid
-  attemptNumber Int               @default(1) @map("attempt_number")
-  status        TestAttemptStatus @default(IN_PROGRESS)
-  score         Decimal?          @db.Decimal(5, 2)
-  maxScore      Int?              @map("max_score")
-  startedAt     DateTime          @default(now()) @map("started_at")
-  submittedAt   DateTime?         @map("submitted_at")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  id              String            @id @default(uuid()) @db.Uuid
+  studentId       String            @map("student_id") @db.Uuid
+  testId          String            @map("test_id") @db.Uuid
+  attemptNumber   Int               @default(1) @map("attempt_number")
+  status          TestAttemptStatus @default(IN_PROGRESS)
+  score           Decimal?          @db.Decimal(5, 2)
+  maxScore        Int?              @map("max_score")
+  startedAt       DateTime          @default(now()) @map("started_at")
+  submittedAt     DateTime?         @map("submitted_at")
+  expiresAt       DateTime?         @map("expires_at")
+  autosavedAt     DateTime?         @map("autosaved_at")
+  clientSessionId String?           @map("client_session_id") @db.Uuid
+  ipHash          String?           @map("ip_hash") @db.VarChar(64)
+  tabBlurCount    Int               @default(0) @map("tab_blur_count")
+  pasteCount      Int               @default(0) @map("paste_count")
+  antiCheatFlags  Json?             @map("anti_cheat_flags")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
 
   student User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
   test    Test            @relation(fields: [testId], references: [id], onDelete: Cascade)

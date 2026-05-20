@@ -8,10 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
-import { getErrorMessage } from '@/lib/api';
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth();
+  const { login, isLoggingIn } = useAuth();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
@@ -19,10 +18,17 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     const form = new FormData(e.currentTarget);
+
     try {
       await login(String(form.get('email')), String(form.get('password')));
     } catch (err) {
-      setError(getErrorMessage(err, 'Login failed'));
+      const message =
+        err instanceof TypeError && err.message === 'Failed to fetch'
+          ? 'Cannot reach API. Start backend: pnpm --filter @edu-platform/api dev (port 3001)'
+          : err instanceof Error
+            ? err.message
+            : 'Login failed';
+      setError(message);
     }
   }
 
@@ -46,7 +52,14 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <section className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required autoComplete="email" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            defaultValue="student@test.com"
+          />
         </section>
         <section className="space-y-2">
           <Label htmlFor="password">Password</Label>
@@ -56,12 +69,17 @@ export default function LoginPage() {
             type="password"
             required
             autoComplete="current-password"
+            defaultValue="Test1234!"
           />
         </section>
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign in'}
+        <Button type="submit" className="w-full" disabled={isLoggingIn}>
+          {isLoggingIn ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
+
+      <p className="text-muted-foreground text-center text-xs">
+        API: {process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'}
+      </p>
 
       <p className="text-muted-foreground text-center text-sm">
         No account?{' '}

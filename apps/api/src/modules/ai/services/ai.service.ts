@@ -39,7 +39,7 @@ export class AiService {
 
   async analyzeTest(input: AnalyzeTestInput): Promise<AiAssessmentResponse> {
     this.assertEnabled();
-    this.rateLimit.assertWithinLimit(input.studentId);
+    await this.rateLimit.assertWithinLimit(input.studentId);
 
     const userPrompt = this.promptBuilder.buildTestAnalysisUserPrompt(input);
     await this.moderation.assertInputSafe(userPrompt);
@@ -82,7 +82,7 @@ export class AiService {
 
   async getPracticeHint(input: PracticeHintInput): Promise<AiPracticeHintResponse> {
     this.assertEnabled();
-    this.rateLimit.assertWithinLimit(input.studentId);
+    await this.rateLimit.assertWithinLimit(input.studentId);
 
     if (input.studentMessage) {
       await this.moderation.assertInputSafe(input.studentMessage);
@@ -122,7 +122,7 @@ export class AiService {
     topicTitle?: string;
   }): Promise<AiPracticeHintResponse> {
     this.assertEnabled();
-    this.rateLimit.assertWithinLimit(params.studentId);
+    await this.rateLimit.assertWithinLimit(params.studentId);
     await this.moderation.assertInputSafe(params.message);
 
     const sessionId = params.sessionId ?? this.chatLog.createSessionId();

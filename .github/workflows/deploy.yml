@@ -1,0 +1,48 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.repository_owner != ''
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate production env file present
+        run: |
+          test -n "${{ secrets.PRODUCTION_ENV_FILE }}" || echo "Set PRODUCTION_ENV_FILE secret (base64 .env) to enable deploy steps"
+        continue-on-error: true
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install & build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm db:generate
+          pnpm build
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @edu-platform/api exec prisma migrate deploy
+
+      # Extend with your host (SSH, Kubernetes, Fly.io, etc.)
+      - name: Deploy placeholder
+        run: |
+          echo "Build artifacts ready. Wire this job to your infrastructure:"
+          echo "  docker compose -f docker-compose.prod.yml up -d --build"
+          echo "  or push images to your registry and roll out."

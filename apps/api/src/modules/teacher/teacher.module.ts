@@ -18,6 +18,11 @@ import { TeacherTopicsService } from './services/teacher-topics.service';
     TeacherCourseGuard,
     TeacherTopicGuard,
   ],
-  exports: [TeacherTopicsService, TeacherContentService],
+  exports: [
+    TeacherTopicsService,
+    TeacherContentService,
+    TeacherOwnershipService,
+    TeacherCourseGuard,
+  ],
 })
 export class TeacherModule {}

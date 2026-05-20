@@ -3,17 +3,13 @@ import { LearningStep, PracticeTaskLevel, ProgressStatus } from '@prisma/client'
 import type { AuthUser } from '@/common/types';
 import { StudentNotFoundException } from '../exceptions/student-learning.exception';
 import { StudentLearningRepository } from '../repositories/student-learning.repository';
-import { StudentAiFeedbackService } from './student-ai-feedback.service';
 import { StudentProgressService } from './student-progress.service';
-import { StudentTestService } from './student-test.service';
 
 @Injectable()
 export class StudentLearningService {
   constructor(
     private readonly repository: StudentLearningRepository,
     private readonly progressService: StudentProgressService,
-    private readonly testService: StudentTestService,
-    private readonly aiFeedbackService: StudentAiFeedbackService,
   ) {}
 
   async listCourses() {
@@ -155,18 +151,6 @@ export class StudentLearningService {
       ),
       message: 'You can start a new test attempt.',
     };
-  }
-
-  async submitTestWithFeedback(topicId: string, attemptId: string, user: AuthUser) {
-    const result = await this.testService.submitTest(topicId, attemptId, user);
-    const feedback = await this.aiFeedbackService.generatePostTestFeedback(
-      user.id,
-      topicId,
-      result.score,
-      result.passed,
-      attemptId,
-    );
-    return { ...result, aiFeedback: feedback };
   }
 
   private buildFlowState(progress: {

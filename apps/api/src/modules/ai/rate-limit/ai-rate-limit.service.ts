@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from '@/infrastructure/redis/redis.service';
 import { AiException } from '../exceptions/ai.exception';
 
 interface RateBucket {
@@ -11,9 +12,49 @@ interface RateBucket {
 export class AiRateLimitService {
   private readonly buckets = new Map<string, RateBucket>();
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly redis: RedisService,
+  ) {}
 
-  assertWithinLimit(studentId: string): void {
+  async assertWithinLimit(studentId: string): Promise<void> {
+    if (this.redis.isReady()) {
+      await this.assertRedisLimit(studentId);
+      return;
+    }
+    this.assertMemoryLimit(studentId);
+  }
+
+  private async assertRedisLimit(studentId: string): Promise<void> {
+    const perMinute = this.config.get<number>('openai.rateLimitPerMinute', 10);
+    const perHour = this.config.get<number>('openai.rateLimitPerHour', 30);
+
+    const minuteKey = `ai:rl:min:${studentId}`;
+    const hourKey = `ai:rl:hour:${studentId}`;
+
+    const [minuteCount, hourCount] = await Promise.all([
+      this.redis.incrementWithTtl(minuteKey, 60),
+      this.redis.incrementWithTtl(hourKey, 3600),
+    ]);
+
+    if (minuteCount > perMinute) {
+      throw new AiException(
+        'AI_RATE_LIMITED',
+        'Too many AI requests. Please wait a minute and try again.',
+        429,
+      );
+    }
+
+    if (hourCount > perHour) {
+      throw new AiException(
+        'AI_RATE_LIMITED',
+        'You reached the hourly AI limit. Please try again later.',
+        429,
+      );
+    }
+  }
+
+  private assertMemoryLimit(studentId: string): void {
     const now = Date.now();
     const perMinute = this.config.get<number>('openai.rateLimitPerMinute', 10);
     const perHour = this.config.get<number>('openai.rateLimitPerHour', 30);

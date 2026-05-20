@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Get,
   HttpCode,
@@ -14,20 +13,15 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PracticeTaskLevel, Role } from '@prisma/client';
 import { CurrentUser, Roles } from '@/common/decorators';
 import type { AuthUser } from '@/common/types';
-import { SubmitAnswerDto } from '../dto';
 import { StudentTopicAccessGuard } from '../guards/student-topic-access.guard';
 import { StudentLearningService } from '../services/student-learning.service';
-import { StudentTestService } from '../services/student-test.service';
 
 @ApiTags('student')
 @ApiBearerAuth()
 @Roles(Role.STUDENT, Role.ADMIN)
 @Controller('student/topics/:topicId')
 export class StudentLearningController {
-  constructor(
-    private readonly learningService: StudentLearningService,
-    private readonly testService: StudentTestService,
-  ) {}
+  constructor(private readonly learningService: StudentLearningService) {}
 
   @Get()
   @UseGuards(StudentTopicAccessGuard)
@@ -93,43 +87,4 @@ export class StudentLearningController {
     return this.learningService.completePractice(topicId, level, user);
   }
 
-  // ─── Test flow ──────────────────────────────────────────────────────────────
-
-  @Post('test/start')
-  @UseGuards(StudentTopicAccessGuard)
-  @ApiOperation({ summary: 'Start a new test attempt' })
-  startTest(
-    @Param('topicId', ParseUUIDPipe) topicId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.testService.startTest(topicId, user);
-  }
-
-  @Post('test/attempts/:attemptId/answers/:questionId')
-  @UseGuards(StudentTopicAccessGuard)
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Submit answer for a question' })
-  submitAnswer(
-    @Param('topicId', ParseUUIDPipe) topicId: string,
-    @Param('attemptId', ParseUUIDPipe) attemptId: string,
-    @Param('questionId', ParseUUIDPipe) questionId: string,
-    @Body() dto: SubmitAnswerDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.testService.submitAnswer(topicId, attemptId, questionId, dto, user);
-  }
-
-  @Post('test/attempts/:attemptId/submit')
-  @UseGuards(StudentTopicAccessGuard)
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Submit test — score, unlock next topic if >= 85%, AI feedback',
-  })
-  submitTest(
-    @Param('topicId', ParseUUIDPipe) topicId: string,
-    @Param('attemptId', ParseUUIDPipe) attemptId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.learningService.submitTestWithFeedback(topicId, attemptId, user);
-  }
 }

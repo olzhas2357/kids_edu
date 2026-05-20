@@ -15,16 +15,16 @@ export function RoleGuard({
   allowedRoles: UserRole[];
 }) {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isSessionLoading } = useAuth();
 
   useEffect(() => {
-    if (isLoading || !user) return;
+    if (isSessionLoading || !user) return;
     if (!allowedRoles.includes(user.role as UserRole)) {
       router.replace(getHomeRouteForRole(user.role));
     }
-  }, [allowedRoles, isLoading, router, user]);
+  }, [allowedRoles, isSessionLoading, router, user]);
 
-  if (isLoading || !user) {
+  if (isSessionLoading || !user) {
     return <PageLoading />;
   }
 

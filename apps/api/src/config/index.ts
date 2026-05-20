@@ -1,6 +1,12 @@
+export { validateEnv, NodeEnvironment, EnvironmentVariables } from './env.validation';
 export { default as appConfig } from './app.config';
 export { default as authConfig } from './auth.config';
 export { default as databaseConfig } from './database.config';
 export { default as jwtConfig } from './jwt.config';
 export { default as openaiConfig } from './openai.config';
 export { default as learningConfig } from './learning.config';
+export { default as testingConfig } from './testing.config';
+export { default as analyticsConfig } from './analytics.config';
+export { default as redisConfig } from './redis.config';
+export { default as throttleConfig } from './throttle.config';
+export { default as loggingConfig } from './logging.config';

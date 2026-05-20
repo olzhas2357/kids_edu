@@ -4,6 +4,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   AiExceptionFilter,
   AllExceptionsFilter,
+  TestingExceptionFilter,
   AuthExceptionFilter,
   HttpExceptionFilter,
 } from './common/filters';
@@ -16,7 +17,14 @@ import {
   jwtConfig,
   learningConfig,
   openaiConfig,
+  testingConfig,
+  analyticsConfig,
+  redisConfig,
+  throttleConfig,
+  loggingConfig,
+  validateEnv,
 } from './config';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -24,6 +32,8 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { HealthModule } from './modules/health/health.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { StudentModule } from './modules/student/student.module';
+import { TestingModule } from './modules/testing/testing.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -31,18 +41,34 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, authConfig, databaseConfig, jwtConfig, learningConfig, openaiConfig],
+      validate: validateEnv,
+      load: [
+        appConfig,
+        authConfig,
+        databaseConfig,
+        jwtConfig,
+        learningConfig,
+        openaiConfig,
+        testingConfig,
+        analyticsConfig,
+        redisConfig,
+        throttleConfig,
+        loggingConfig,
+      ],
       envFilePath: ['.env.local', '.env'],
     }),
+    InfrastructureModule,
     PrismaModule,
     HealthModule,
     AuthModule,
     TeacherModule,
     StudentModule,
+    TestingModule,
     UsersModule,
     CoursesModule,
     LessonsModule,
     AiModule,
+    AnalyticsModule,
   ],
   providers: [
     {
@@ -68,6 +94,10 @@ import { UsersModule } from './modules/users/users.module';
     {
       provide: APP_FILTER,
       useClass: AiExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: TestingExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,
