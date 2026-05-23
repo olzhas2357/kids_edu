@@ -1,29 +1,26 @@
 {
-  "name": "kids-edu-platform",
-  "version": "0.1.0",
+  "name": "kids-edu-mvp",
+  "version": "1.0.0",
   "private": true,
-  "description": "Educational platform for children 8–10 years",
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "typecheck": "turbo typecheck",
-    "db:generate": "pnpm --filter @edu-platform/api exec prisma generate",
-    "db:migrate": "pnpm --filter @edu-platform/api exec prisma migrate dev",
-    "db:seed": "pnpm --filter @edu-platform/api db:seed",
-    "db:studio": "pnpm --filter @edu-platform/api exec prisma studio"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8",
+    "next": "^15.3.3",
+    "openai": "^4.104.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@edu-platform/eslint-config": "workspace:*",
-    "@edu-platform/typescript-config": "workspace:*",
-    "prettier": "^3.5.3",
-    "prettier-plugin-tailwindcss": "^0.6.11",
-    "turbo": "^2.5.4"
-  },
-  "packageManager": "pnpm@9.15.9",
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "@tailwindcss/postcss": "^4.1.8",
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3"
   }
 }
