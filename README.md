@@ -1,117 +1,71 @@
 # Kids Edu Platform
 
-Monorepo: Next.js 15 + NestJS + PostgreSQL + Prisma.
+Простая образовательная платформа: **Next.js 15** + **Supabase** + **OpenAI**.
 
-## Quick start
+Курс: **Информатика → 3 класс → 3 четверть** · 8 тем · финальный тест.
 
-```bash
-pnpm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-docker compose up -d   # postgres (+ redis optional; set REDIS_ENABLED=true in apps/api/.env)
-pnpm db:generate && pnpm db:migrate && pnpm db:seed
-pnpm dev
-```
-
-| Service | URL |
-|---------|-----|
-| Web | http://localhost:3000 |
-| API | http://localhost:3001/api/v1 |
-| Swagger | http://localhost:3001/docs |
-
-## Production
-
-See **[docs/PRODUCTION.md](docs/PRODUCTION.md)** — Docker, nginx, CI/CD, Redis, monitoring, checklist, OpenAI cost tips.
+## Запуск
 
 ```bash
-cp .env.production.example .env
-./deploy/scripts/validate-env.sh .env
-docker compose -f docker-compose.prod.yml up -d --build
+npm install
+cp .env.example .env.local
+# заполните ключи Supabase
+npm run dev
 ```
 
-## Test users (password: `Test1234!`)
+http://localhost:3000
 
-- admin@test.com — ADMIN
-- teacher@test.com — TEACHER
-- student@test.com — STUDENT
+## Supabase
 
-## Structure
+1. Создайте проект на [supabase.com](https://supabase.com)
+2. **SQL Editor** → выполните `supabase/schema.sql`
+3. **Authentication → Users** → добавьте:
+   - `teacher@demo.com` / `demo1234` — metadata: `{"role":"teacher","display_name":"Учитель"}`
+   - `student@demo.com` / `demo1234` — metadata: `{"role":"student","display_name":"Ученик"}`
+4. Скопируйте ключи в `.env.local` (см. `.env.example`)
 
-- `apps/api` — NestJS backend (auth, teacher dashboard, Prisma)
-- `apps/web` — Next.js 15 App Router (see `apps/web/ARCHITECTURE.md`)
-- `packages/shared` — shared types
+## Роли
 
-## Teacher API (`/api/v1/teacher`, role: TEACHER or ADMIN)
+### Ученик
+- `/student/course` — 8 тем (линейно)
+- Урок: теория → YouTube → практика A/B/C (внешние ссылки) → тест (5 вопросов) → AI feedback
+- **0–50%** — не усвоено, повтор  
+- **50–70%** — повтор, следующая тема закрыта  
+- **70–85%** — переход с рекомендацией  
+- **85%+** — следующая тема открыта  
+- После 8 тем — **финальный тест** (10 вопросов), 9/10+ → «Курсты сәтті аяқтадың»
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/courses` | List teacher courses |
-| GET/POST | `/courses/:courseId/topics` | List / create topics |
-| GET/PATCH/DELETE | `/topics/:topicId` | Topic CRUD + full content |
-| PUT/PATCH/DELETE | `/topics/:topicId/theory` | Theory content |
-| POST/PATCH/DELETE | `/topics/:topicId/videos/:id?` | YouTube videos |
-| PUT/DELETE | `/topics/:topicId/practice/:level` | Practice A/B/C + link |
-| GET/POST/PATCH/DELETE | `/topics/:topicId/test` | Final test |
-| POST/PATCH/DELETE | `/topics/:topicId/test/questions/:id?` | Test questions |
+### Учитель
+- `/teacher` — панель + краткая аналитика
+- `/teacher/topics` — создать / удалить темы
+- `/teacher/topics/[id]` — теория, видео, ссылки A/B/C, 5 вопросов теста
+- `/teacher/analytics` — прогресс, слабые ученики, сложные темы
+- `/teacher/final-test` — 10 вопросов финального теста
 
-## Teacher Analytics (`/api/v1/teacher/courses/:courseId/analytics`)
+## База данных
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/dashboard` | Full dashboard (KPIs, charts, AI risk) |
-| GET | `/summary` | Average score, pass rate, attempts |
-| GET | `/topics/difficult` | Hardest topics |
-| GET | `/students/weak` | Students needing help |
-| GET | `/charts/progress` | Chart.js-ready progress data |
-| GET | `/charts/attempts` | Attempts time series + by status |
-| GET | `/ai-risk` | Anti-cheat + weak AI performance risk |
+| Таблица | Назначение |
+|---------|------------|
+| `profiles` | учителя и ученики |
+| `course_paths` | предмет / класс / четверть |
+| `topics` | 8 тем |
+| `topic_content` | теория + видео |
+| `tasks` | ссылки A, B, C |
+| `tests` + `test_questions` | тест темы и финальный |
+| `progress` | шаги ученика |
+| `attempts` | попытки тестов |
+| `ai_logs` | AI-обратная связь |
+| `final_progress` | финальный экзамен |
 
-Query: `?days=30` for time-series charts.
+## Структура
 
-## Student API (`/api/v1/student`, role: STUDENT)
-
-Learning flow: theory → video → practice A/B/C → test → AI feedback.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/courses` | Published courses |
-| GET | `/courses/:courseId/topics` | Topics with lock/progress |
-| POST | `/courses/:courseId/enroll` | Init progress |
-| GET | `/topics/:topicId` | Open topic content |
-| POST | `/topics/:topicId/steps/theory\|video\|practice/:level/complete` | Step progress |
-| POST | `/topics/:topicId/test/start` | Start/resume MC test (5×4) |
-| GET | `/topics/:topicId/test/attempts/:id/session` | Session + timer + saved answers |
-| POST | `.../answers/:qid` | Autosave one answer |
-| POST | `.../autosave` | Batch autosave |
-| POST | `.../events` | Anti-cheat (`tab_blur`, `paste`) |
-| POST | `.../submit` | Score + AI feedback + unlock |
-| GET | `/topics/:topicId/test/history` | Attempt history |
-| GET | `.../attempts/:id/result` | Single result |
-| POST | `/topics/:topicId/retry` | Retry test |
-| GET | `/topics/:topicId/result` | Result + recommendation |
-
-## AI API (`/api/v1/ai`, role: STUDENT)
-
-Socratic tutor for children 8–10: hints only, no direct answers. Uses OpenAI when `OPENAI_API_KEY` is set.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | AI status (public) |
-| POST | `/topics/:topicId/test/analyze` | Analyze graded test → structured feedback |
-| POST | `/topics/:topicId/practice/:practiceTaskId/hint` | Practice Socratic hint |
-| POST | `/chat` | Free-form tutor chat |
-
-**AI response shape (test analysis):**
-
-```json
-{
-  "score": 78,
-  "level": "good",
-  "feedback": "...",
-  "recommendation": "...",
-  "allowNextTopic": false,
-  "socraticHint": "..."
-}
+```
+src/app/          страницы и API routes
+src/components/   UI
+src/lib/          Supabase, scoring, OpenAI
+supabase/         schema.sql
 ```
 
-Levels: `weak` | `medium` | `good` | `excellent`. Test submit (`/student/.../submit`) also returns `aiFeedback.assessment`.
+## OpenAI
+
+Опционально: `OPENAI_API_KEY` в `.env.local`. Без ключа — встроенные дружелюбные сообщения.
