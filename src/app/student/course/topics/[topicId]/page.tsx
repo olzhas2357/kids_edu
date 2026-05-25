@@ -37,28 +37,28 @@ export default function LessonPage() {
     load();
   }
 
-  if (!topic) return <p className="text-slate-500">Загрузка…</p>;
+  if (!topic) return <p className="text-slate-500">Жүктелуде…</p>;
 
   const canTest = isStepUnlocked(progress, 'test');
 
   return (
     <div>
       <Link href="/student/course" className="text-sm text-indigo-600 hover:underline">
-        ← К списку тем
+        ← Тақырыптар тізіміне
       </Link>
       <h1 className="mt-2 mb-6 text-2xl font-bold">{topic.title}</h1>
 
       <Card className="mb-4">
         <h2 className="mb-2 font-semibold">{content?.theory_title ?? 'Теория'}</h2>
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-          {content?.theory_text || 'Теория пока не добавлена учителем.'}
+          {content?.theory_text || 'Теория әлі оқытушы тарапынан қосылмады.'}
         </p>
         {!progress?.theory_done && content?.theory_text && (
           <Button className="mt-4" onClick={() => markDone('theory')}>
-            ✓ Теория прочитана
+            ✓ Теория оқылды
           </Button>
         )}
-        {progress?.theory_done && <p className="mt-2 text-sm text-green-600">Выполнено ✓</p>}
+        {progress?.theory_done && <p className="mt-2 text-sm text-green-600">Аяқталды ✓</p>}
       </Card>
 
       <Card className="mb-4">
@@ -71,16 +71,16 @@ export default function LessonPage() {
               rel="noreferrer"
               className="text-sm text-indigo-600 hover:underline"
             >
-              Смотреть видео →
+              Видеоны көру →
             </a>
             {isStepUnlocked(progress, 'video') && !progress?.video_done && (
               <Button className="mt-4 block" variant="outline" onClick={() => markDone('video')}>
-                ✓ Видео просмотрено
+                ✓ Видео қаралды
               </Button>
             )}
           </>
         ) : (
-          <p className="text-sm text-slate-400">Видео не добавлено</p>
+          <p className="text-sm text-slate-400">Видео қосылмаған</p>
         )}
         {progress?.video_done && <p className="mt-2 text-sm text-green-600">Выполнено ✓</p>}
       </Card>
@@ -94,7 +94,7 @@ export default function LessonPage() {
         return (
           <Card key={level} className="mb-3">
             <h3 className="font-medium">
-              Практика {level}: {task?.title ?? `Уровень ${level}`}
+              Тапсырма {level}: {task?.title ?? `${level} деңгей`}
             </h3>
             {task?.link_url ? (
               <a
@@ -103,21 +103,21 @@ export default function LessonPage() {
                 rel="noreferrer"
                 className="mt-1 inline-block text-sm text-indigo-600 hover:underline"
               >
-                Открыть задание (Wordwall / LearningApps / Genially) →
+                Тапсырманы ашу (Wordwall / LearningApps / Genially) →
               </a>
             ) : (
-              <p className="text-sm text-slate-400">Ссылка не добавлена</p>
+              <p className="text-sm text-slate-400">Сілтеме қосылмаған</p>
             )}
             <p className="mt-1 text-xs text-slate-400">
-              Платформа не проверяет задание — нажмите «выполнено» после работы.
+              Платформа тапсырманы тексермейді — жұмыстан кейін «орындалды» түймесін басыңыз.
             </p>
             {unlocked && !done && task?.link_url && (
               <Button className="mt-3" variant="outline" onClick={() => markDone(level)}>
-                ✓ Выполнено
+                ✓ Аяқталды
               </Button>
             )}
-            {done && <p className="mt-2 text-sm text-green-600">Выполнено ✓</p>}
-            {!unlocked && <p className="mt-2 text-sm text-slate-400">Сначала завершите предыдущий шаг</p>}
+            {done && <p className="mt-2 text-sm text-green-600">Аяқталды ✓</p>}
+            {!unlocked && <p className="mt-2 text-sm text-slate-400">Алдынағы қадамды бірінші аяқтаңыз</p>}
           </Card>
         );
       })}
@@ -127,10 +127,10 @@ export default function LessonPage() {
           href={`/student/course/topics/${topicId}/test`}
           className="mt-6 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Итоговый тест (5 вопросов) →
+          Қорытынды тест (5 сұрақ) →
         </Link>
       ) : (
-        <p className="mt-6 text-sm text-slate-500">Пройдите все шаги, чтобы открыть тест.</p>
+        <p className="mt-6 text-sm text-slate-500">Тесті ашу үшін барлық қадамдарды орындаңыз.</p>
       )}
     </div>
   );

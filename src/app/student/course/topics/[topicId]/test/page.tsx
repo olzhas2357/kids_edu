@@ -44,12 +44,12 @@ export default function TopicTestPage() {
   return (
     <div>
       <Link href={`/student/course/topics/${topicId}`} className="text-sm text-indigo-600 hover:underline">
-        ← Урок
+        ← Сабақ
       </Link>
       <h1 className="mt-2 mb-6 text-2xl font-bold">{title} — тест</h1>
 
       {questions.length < 5 ? (
-        <p className="text-amber-700">Учитель ещё не добавил 5 вопросов к этой теме.</p>
+        <p className="text-amber-700">Мұғалім осы тақырыпқа әлі 5 сұрақ қоспады.</p>
       ) : (
         <form onSubmit={submit} className="space-y-4">
           {questions.map((q, i) => (
@@ -72,7 +72,7 @@ export default function TopicTestPage() {
             </Card>
           ))}
           <Button type="submit" disabled={loading}>
-            {loading ? 'Проверка…' : 'Отправить тест'}
+            {loading ? 'Тексеру…' : 'Тесті жіберу'}
           </Button>
         </form>
       )}

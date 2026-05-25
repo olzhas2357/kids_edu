@@ -35,19 +35,19 @@ export default function FinalTestPage() {
     const data = await res.json();
     setLoading(false);
     if (data.coursePassed) router.push('/student/success');
-    else alert(`Результат: ${data.score}/${data.total}. Нужно 9 или 10 правильных ответов.`);
+    else alert(`Нәтиже: ${data.score}/${data.total}. 9 немесе 10 дұрыс жауап қажет.`);
   }
 
   return (
     <div>
       <Link href="/student/course" className="text-sm text-indigo-600 hover:underline">
-        ← К курсу
+        ← Курске
       </Link>
-      <h1 className="mt-2 mb-6 text-2xl font-bold">Финальный тест</h1>
-      <p className="mb-6 text-slate-500">10 вопросов. Для успеха нужно 9/10 или 10/10.</p>
+      <h1 className="mt-2 mb-6 text-2xl font-bold">Соңғы тест</h1>
+      <p className="mb-6 text-slate-500">10 сұрақ. Жетістік үшін 9/10 немесе 10/10 қажет.</p>
 
       {questions.length < 10 ? (
-        <p className="text-amber-700">Учитель ещё не добавил 10 вопросов финального теста.</p>
+        <p className="text-amber-700">Мұғалім соңғы тестке әлі 10 сұрақ қоспады.</p>
       ) : (
         <form onSubmit={submit} className="space-y-4">
           {questions.map((q, i) => (
@@ -70,7 +70,7 @@ export default function FinalTestPage() {
             </Card>
           ))}
           <Button type="submit" disabled={loading}>
-            {loading ? 'Отправка…' : 'Завершить курс'}
+            {loading ? 'Жіберілуде…' : 'Курсты аяқтау'}
           </Button>
         </form>
       )}

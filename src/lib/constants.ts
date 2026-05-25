@@ -5,7 +5,7 @@ export const TOPIC_QUESTION_COUNT = 5;
 export const FINAL_QUESTION_COUNT = 10;
 
 export const DEMO = {
-  teacherEmail: 'teacher@demo.com',
-  studentEmail: 'student@demo.com',
+  teacherEmail: 'teacher@gmail.com',
+  studentEmail: 'student@gmail.com',
   password: 'demo1234',
 };

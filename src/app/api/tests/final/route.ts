@@ -53,7 +53,7 @@ export async function PUT(request: Request) {
       .insert({
         course_path_id: DEFAULT_COURSE_PATH_ID,
         test_type: 'final',
-        title: 'Финальный тест',
+        title: 'Соңғы тест',
       })
       .select('id')
       .single();

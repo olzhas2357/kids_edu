@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       await supabase.from('tasks').insert({
         topic_id: topic.id,
         level,
-        title: body[`task_${level.toLowerCase()}_title`] ?? `Уровень ${level}`,
+        title: body[`task_${level.toLowerCase()}_title`] ?? `${level} деңгей`,
         link_url: link,
       });
     }

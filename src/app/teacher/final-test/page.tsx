@@ -46,13 +46,13 @@ export default function TeacherFinalTestPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Финальный тест</h1>
-      <p className="mb-6 text-slate-500">10 вопросов. Успех курса: 9/10 или 10/10.</p>
+      <h1 className="mb-2 text-2xl font-bold">Соңғы тест</h1>
+      <p className="mb-6 text-slate-500">10 сұрақ. Курстың табысы: 9/10 немесе 10/10.</p>
 
       <form onSubmit={save} className="space-y-4">
         {questions.map((q, i) => (
           <Card key={i}>
-            <p className="mb-2 text-sm font-medium">Вопрос {i + 1}</p>
+            <p className="mb-2 text-sm font-medium">Сұрақ {i + 1}</p>
             <Input
               value={q.question_text}
               onChange={(e) => {
@@ -65,7 +65,7 @@ export default function TeacherFinalTestPage() {
               {q.options.map((opt, oi) => (
                 <Input
                   key={oi}
-                  placeholder={`Вариант ${oi + 1}`}
+                  placeholder={`Жауап ${oi + 1}`}
                   value={opt}
                   onChange={(e) => {
                     const next = [...questions];
@@ -79,7 +79,7 @@ export default function TeacherFinalTestPage() {
             </div>
             <Input
               className="mt-2"
-              placeholder="Правильный ответ"
+              placeholder="Дұрыс жауап"
               value={q.correct_answer}
               onChange={(e) => {
                 const next = [...questions];
@@ -89,7 +89,7 @@ export default function TeacherFinalTestPage() {
             />
           </Card>
         ))}
-        <Button type="submit">{saved ? 'Сохранено ✓' : 'Сохранить финальный тест'}</Button>
+        <Button type="submit">{saved ? 'Сақталды ✓' : 'Соңғы тестті сақтау'}</Button>
       </form>
     </div>
   );

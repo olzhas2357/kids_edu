@@ -35,7 +35,7 @@ export default function TeacherTopicsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Удалить тему?')) return;
+    if (!confirm('Тақырыпты жою керек пе?')) return;
     await fetch(`/api/topics/${id}`, { method: 'DELETE' });
     load();
   }
@@ -43,9 +43,9 @@ export default function TeacherTopicsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Темы курса</h1>
+        <h1 className="text-2xl font-bold">Курс тақырыптары</h1>
         <Button type="button" onClick={() => setShowForm(!showForm)}>
-          + Новая тема
+          + Жаңа тақырып
         </Button>
       </div>
 
@@ -53,12 +53,12 @@ export default function TeacherTopicsPage() {
         <Card className="mb-6">
           <form onSubmit={create} className="flex gap-2">
             <Input
-              placeholder="Название темы"
+              placeholder="Тақырып атауы"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
             />
-            <Button type="submit">Создать</Button>
+            <Button type="submit">Құру</Button>
           </form>
         </Card>
       )}
@@ -69,21 +69,21 @@ export default function TeacherTopicsPage() {
             <div>
               <span className="text-xs text-slate-400">#{t.order_index + 1}</span>
               <h3 className="font-semibold">{t.title}</h3>
-              <p className="text-xs text-slate-400">{t.is_published ? 'Опубликована' : 'Черновик'}</p>
+              <p className="text-xs text-slate-400">{t.is_published ? 'Жарияланған' : 'Тұжырым'}</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <Link
                 href={`/teacher/topics/${t.id}`}
                 className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50"
               >
-                Редактировать
+                Өңдеу
               </Link>
               <button
                 type="button"
                 onClick={() => remove(t.id)}
                 className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
               >
-                Удалить
+                Жою
               </button>
             </div>
           </Card>

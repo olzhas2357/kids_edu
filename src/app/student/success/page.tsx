@@ -9,7 +9,7 @@ export default function SuccessPage() {
         <h1 className="mt-4 text-2xl font-bold text-green-800">Курсты сәтті аяқтадың!</h1>
         <p className="mt-2 text-slate-600">Сіз курсты сәтті аяқтадыңыз. Керемет жұмыс!</p>
         <Link href="/student/course" className="mt-6 inline-block text-indigo-600 hover:underline">
-          Вернуться к курсу
+          Курске қайту
         </Link>
       </Card>
     </div>

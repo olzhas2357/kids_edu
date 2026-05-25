@@ -14,7 +14,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
         email={profile.email}
         links={[
           { href: '/student/course', label: 'Курс' },
-          { href: '/student/final', label: 'Финальный тест' },
+          { href: '/student/final', label: 'Соңғы тест' },
         ]}
       />
       <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>

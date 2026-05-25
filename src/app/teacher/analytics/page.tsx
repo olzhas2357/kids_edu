@@ -18,46 +18,46 @@ export default function TeacherAnalyticsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Аналитика класса</h1>
+      <h1 className="mb-6 text-2xl font-bold">Сынып аналитикасы</h1>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-semibold">Прогресс учеников</h2>
+          <h2 className="mb-4 font-semibold">Оқушылардың прогресі</h2>
           <div className="space-y-2">
             {data?.studentStats?.map((s) => (
               <div key={s.name} className="flex justify-between text-sm">
                 <span className={s.isWeak ? 'text-red-600' : ''}>{s.name}</span>
                 <span>
-                  {s.completedTopics}/8 тем · ср. {s.avgScore}%
+                  {s.completedTopics}/8 тақырып · ср. {s.avgScore}%
                 </span>
               </div>
-            )) ?? <p className="text-slate-400">Нет учеников</p>}
+            )) ?? <p className="text-slate-400">Оқушылар жоқ</p>}
           </div>
         </Card>
 
         <Card>
-          <h2 className="mb-4 font-semibold">Слабые темы (&lt;70%)</h2>
+          <h2 className="mb-4 font-semibold">Әлсіз тақырыптар (&lt;70%)</h2>
           {data?.difficultTopics?.length ? (
             data.difficultTopics.map((t) => (
               <p key={t.title} className="text-sm text-slate-600">
-                {t.title}: ср. {t.avgScore}% ({t.completedCount} завершили)
+                {t.title}: ср. {t.avgScore}% ({t.completedCount} аяқтаған)
               </p>
             ))
           ) : (
-            <p className="text-sm text-slate-400">Пока нет сложных тем</p>
+            <p className="text-sm text-slate-400">Қиын тақырыптар әлі жоқ</p>
           )}
         </Card>
       </div>
 
       <Card className="mt-6">
-        <h2 className="mb-4 font-semibold">Все темы</h2>
+        <h2 className="mb-4 font-semibold">Барлық тақырыптар</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b text-slate-500">
-                <th className="py-2">Тема</th>
-                <th className="py-2">Ср. балл</th>
-                <th className="py-2">Завершили</th>
+                <th className="py-2">Тақырып</th>
+                <th className="py-2">Орташа ұпай</th>
+                <th className="py-2">Аяқтағандар</th>
               </tr>
             </thead>
             <tbody>

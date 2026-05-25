@@ -90,7 +90,7 @@ export async function PUT(
 
   for (const level of ['A', 'B', 'C'] as const) {
     const link = body[`task_${level.toLowerCase()}_link`];
-    const title = body[`task_${level.toLowerCase()}_title`] ?? `Уровень ${level}`;
+    const title = body[`task_${level.toLowerCase()}_title`] ?? `${level} деңгей`;
     if (link) {
       await supabase.from('tasks').upsert(
         { topic_id: topicId, level, title, link_url: link },
