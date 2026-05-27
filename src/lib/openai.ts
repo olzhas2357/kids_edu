@@ -3,24 +3,39 @@ import { getAiAction, getAiLevel } from '@/lib/scoring';
 import type { AiResult } from '@/lib/types';
 
 const LEVEL_LABELS = {
-  weak: 'слабый',
-  medium: 'средний',
-  good: 'хороший',
-  excellent: 'отличный',
+  weak: 'нашар',
+  medium: 'орташа',
+  good: 'жақсы',
+  excellent: 'өте жақсы',
 };
 
 export async function analyzeTestResult(
   topicTitle: string,
   score: number,
   total: number,
+  questions: {
+    id: string;
+    question_text: string;
+    correct_answer: string;
+    user_answer?: string | null;
+    is_correct?: boolean;
+  }[],
 ): Promise<AiResult> {
   const scorePercent = Math.round((score / total) * 100);
   const level = getAiLevel(scorePercent);
   const action = getAiAction(scorePercent);
   const canProceed = scorePercent >= 70;
 
+  const questionDetails = questions
+    .map((q, index) => {
+      const answer = q.user_answer ?? '—';
+      const ok = q.is_correct ?? false;
+      return `${index + 1}. ${q.question_text}\nСіздің жауабыңыз: ${answer}\nДұрыс жауап: ${q.correct_answer}\n${ok ? '✓ Дұрыс' : '✗ Қате'}`;
+    })
+    .join('\n\n');
+
   if (!process.env.OPENAI_API_KEY) {
-    return mockFeedback(topicTitle, scorePercent, level, action, canProceed);
+    return mockFeedback(scorePercent, level, action, canProceed);
   }
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -29,17 +44,16 @@ export async function analyzeTestResult(
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.6,
-      max_tokens: 280,
+      max_tokens: 360,
       messages: [
         {
           role: 'system',
-          content: `Ты добрый репетитор для детей 8–10 лет. Пиши просто, коротко, на русском или казахском (1–2 предложения каждый блок). 
-НЕ давай правильные ответы на вопросы теста. Только поддержка и совет.
-Ответь JSON: {"feedback":"...","recommendation":"..."}`,
+          content:
+            'Сен 8–10 жастағы балаларға арналған мейірімді репетиторсың. Қысқа, қарапайым қазақша. JSON: {"feedback":"...","recommendation":"..."}',
         },
         {
           role: 'user',
-          content: `Тема: ${topicTitle}. Результат: ${score}/${total} (${scorePercent}%). Уровень: ${LEVEL_LABELS[level]}.`,
+          content: `Тақырып: ${topicTitle}. ${score}/${total} (${scorePercent}%).\n\n${questionDetails}`,
         },
       ],
     });
@@ -55,12 +69,11 @@ export async function analyzeTestResult(
       canProceed,
     };
   } catch {
-    return mockFeedback(topicTitle, scorePercent, level, action, canProceed);
+    return mockFeedback(scorePercent, level, action, canProceed);
   }
 }
 
 function mockFeedback(
-  topicTitle: string,
   scorePercent: number,
   level: AiResult['level'],
   action: AiResult['action'],
@@ -69,7 +82,7 @@ function mockFeedback(
   return {
     level,
     scorePercent,
-    feedback: defaultFeedback(scorePercent).replace('тему', `«${topicTitle}»`),
+    feedback: defaultFeedback(scorePercent),
     recommendation: defaultRecommendation(action),
     action,
     canProceed,
@@ -77,14 +90,14 @@ function mockFeedback(
 }
 
 function defaultFeedback(percent: number): string {
-  if (percent < 50) return 'Тема пока не усвоена. Не расстраивайся — попробуй ещё раз!';
-  if (percent < 70) return 'Уже лучше! Повтори видео и задания, потом пересдай тест.';
-  if (percent < 85) return 'Хорошая работа! Можешь идти дальше, но лучше немного повторить.';
-  return 'Отлично! Ты хорошо усвоил тему.';
+  if (percent < 50) return 'Тақырып әлі толық меңгерілмеді. Қайталау керек!';
+  if (percent < 70) return 'Жақсы бастама! Бейнебаян мен тапсырмаларды қайтала.';
+  if (percent < 85) return 'Жақсы жұмыс! Алға жүруге болады.';
+  return 'Керемет! Тақырыпты өте жақсы меңгердің.';
 }
 
 function defaultRecommendation(action: AiResult['action']): string {
-  if (action === 'retry') return 'Повтори видео и задания A, B, C, затем пересдай тест.';
-  if (action === 'review') return 'Пересмотри видео или слабые задания, потом переходи к следующей теме.';
-  return 'Можешь переходить к следующей теме!';
+  if (action === 'retry') return 'Сабақты қайтала, тестті қайта тапсыр.';
+  if (action === 'review') return 'Бейнебаянды қайта қара, содан кейін келесі тақырыпқа өт.';
+  return 'Келесі тақырыпқа көше бер!';
 }

@@ -4,6 +4,10 @@ import { getSessionProfile } from '@/lib/auth';
 import { calcPercent } from '@/lib/scoring';
 import { createClient } from '@/lib/supabase/server';
 
+function normalizeAnswer(value: string | null | undefined) {
+  return value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? '';
+}
+
 export async function POST(request: Request) {
   const profile = await getSessionProfile();
   if (!profile || profile.role !== 'student') {
@@ -50,7 +54,9 @@ export async function POST(request: Request) {
 
   let score = 0;
   for (const q of questions) {
-    if (answers[q.id] === q.correct_answer) score += 1;
+    const answer = normalizeAnswer(answers[q.id]);
+    const correct = normalizeAnswer(q.correct_answer);
+    if (answer === correct) score += 1;
   }
   const total = questions.length;
   const coursePassed = score >= 9;

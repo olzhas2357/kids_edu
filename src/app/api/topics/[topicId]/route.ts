@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionProfile } from '@/lib/auth';
+import { parseOptions } from '@/lib/test-utils';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
@@ -20,16 +21,24 @@ export async function GET(
 
   let questions: unknown[] = [];
   if (test) {
-    const selectFields =
-      profile.role === 'teacher'
-        ? 'id, question_text, options, correct_answer, order_index'
-        : 'id, question_text, options, order_index';
     const { data: q } = await supabase
       .from('test_questions')
-      .select(selectFields)
+      .select('id, question_text, options, correct_answer, order_index')
       .eq('test_id', test.id)
       .order('order_index');
-    questions = q ?? [];
+
+    questions = (q ?? []).map((row) => {
+      const options = parseOptions(row.options);
+      if (profile.role === 'student') {
+        return {
+          id: row.id,
+          question_text: row.question_text,
+          options,
+          order_index: row.order_index,
+        };
+      }
+      return { ...row, options };
+    });
   }
 
   let progress = null;

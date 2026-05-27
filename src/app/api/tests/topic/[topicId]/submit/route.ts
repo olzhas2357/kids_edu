@@ -4,6 +4,7 @@ import { getSessionProfile } from '@/lib/auth';
 import { analyzeTestResult } from '@/lib/openai';
 import { allStepsBeforeTestDone } from '@/lib/progress-rules';
 import { calcPercent, canUnlockNextTopic } from '@/lib/scoring';
+import { gradeAllQuestions } from '@/lib/test-utils';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
@@ -44,11 +45,7 @@ export async function POST(
     return NextResponse.json({ error: 'Teacher must add 5 test questions' }, { status: 400 });
   }
 
-  let score = 0;
-  for (const q of questions) {
-    if (answers[q.id] === q.correct_answer) score += 1;
-  }
-  const total = questions.length;
+  const { score, total, breakdown } = gradeAllQuestions(questions, answers);
   const scorePercent = calcPercent(score, total);
   const passed = canUnlockNextTopic(scorePercent);
 
@@ -62,7 +59,18 @@ export async function POST(
     answers,
   });
 
-  const ai = await analyzeTestResult(topic!.title, score, total);
+  const ai = await analyzeTestResult(
+    topic!.title,
+    score,
+    total,
+    breakdown.map((b) => ({
+      id: b.id,
+      question_text: b.question_text,
+      correct_answer: b.correct_answer,
+      user_answer: b.user_answer,
+      is_correct: b.is_correct,
+    })),
+  );
 
   await supabase.from('ai_logs').insert({
     student_id: profile.id,
@@ -90,5 +98,12 @@ export async function POST(
     });
   }
 
-  return NextResponse.json({ score, total, scorePercent, passed, ai });
+  return NextResponse.json({
+    score,
+    total,
+    scorePercent,
+    passed,
+    ai,
+    breakdown,
+  });
 }

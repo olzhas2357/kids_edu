@@ -171,12 +171,22 @@ export default function EditTopicPage() {
                   />
                 ))}
               </div>
-              <Input
-                className="mt-2"
-                placeholder="Дұрыс жауап (дәл сәйкестік)"
+              <label className="mt-2 block text-xs text-slate-500">Дұрыс жауап (тізімнен таңдаңыз)</label>
+              <select
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 value={q.correct_answer}
                 onChange={(e) => updateQuestion(i, 'correct_answer', e.target.value)}
-              />
+              >
+                <option value="">— таңдаңыз —</option>
+                {q.options.filter(Boolean).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-amber-600">
+                Маңызды: дұрыс жауап жауап нұсқаларының біреуімен дәл сәйкес болуы керек.
+              </p>
             </div>
           ))}
         </Card>
