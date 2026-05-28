@@ -40,12 +40,17 @@ export async function PUT(request: Request) {
   const { questions } = await request.json();
   const supabase = await createClient();
 
-  let { data: test } = await supabase
+  const { data: tests } = await supabase
     .from('tests')
     .select('id')
     .eq('course_path_id', DEFAULT_COURSE_PATH_ID)
-    .eq('test_type', 'final')
-    .maybeSingle();
+    .eq('test_type', 'final');
+
+  let test = tests?.[0] ?? null;
+  const duplicateIds = tests?.slice(1).map((t) => t.id) ?? [];
+  if (duplicateIds.length) {
+    await supabase.from('tests').delete().in('id', duplicateIds);
+  }
 
   if (!test) {
     const { data } = await supabase
