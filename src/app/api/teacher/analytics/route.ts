@@ -22,8 +22,13 @@ export async function GET() {
     .eq('course_path_id', DEFAULT_COURSE_PATH_ID)
     .order('order_index');
 
-  const { data: allProgress } = await supabase.from('progress').select('*');
-  const { data: attempts } = await supabase.from('attempts').select('*').order('created_at', { ascending: false });
+  const studentIds = (students ?? []).map((s) => s.id);
+  const { data: allProgress } = studentIds.length
+    ? await supabase.from('progress').select('*').in('student_id', studentIds)
+    : { data: [] };
+  const { data: attempts } = studentIds.length
+    ? await supabase.from('attempts').select('*').in('student_id', studentIds).order('created_at', { ascending: false })
+    : { data: [] };
 
   const topicStats = (topics ?? []).map((t) => {
     const rows = (allProgress ?? []).filter((p) => p.topic_id === t.id);

@@ -51,6 +51,9 @@ export default function TeacherDashboardPage() {
         <Card>
           <h2 className="mb-3 font-semibold">Жедел әрекеттер</h2>
           <div className="flex flex-col gap-2 text-sm">
+            <Link href="/teacher/students" className="text-indigo-600 hover:underline">
+              Оқушыларды басқару →
+            </Link>
             <Link href="/teacher/topics" className="text-indigo-600 hover:underline">
               Тақырыптарды басқару →
             </Link>

@@ -14,6 +14,7 @@ export default async function TeacherLayout({ children }: { children: React.Reac
         email={profile.email}
         links={[
           { href: '/teacher', label: 'Мұғалім панелі' },
+          { href: '/teacher/students', label: 'Оқушылар' },
           { href: '/teacher/topics', label: 'Тақырыптар' },
           { href: '/teacher/analytics', label: 'Талдау' },
           { href: '/teacher/final-test', label: 'Соңғы тест' },
