@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DEFAULT_COURSE_PATH_ID } from '@/lib/constants';
 import { getSessionProfile } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export async function GET() {
   const profile = await getSessionProfile();
@@ -9,14 +9,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const admin = await createAdminClient();
   const supabase = await createClient();
 
-  const { data: students } = await supabase
+  const { data: students } = await admin
     .from('profiles')
     .select('id, email, display_name')
     .eq('role', 'student')
     .eq('teacher_id', profile.id);
-  const { data: topics } = await supabase
+
+  const { data: topics } = await admin
     .from('topics')
     .select('id, title, order_index')
     .eq('course_path_id', DEFAULT_COURSE_PATH_ID)
@@ -24,10 +26,10 @@ export async function GET() {
 
   const studentIds = (students ?? []).map((s) => s.id);
   const { data: allProgress } = studentIds.length
-    ? await supabase.from('progress').select('*').in('student_id', studentIds)
+    ? await admin.from('progress').select('*').in('student_id', studentIds)
     : { data: [] };
   const { data: attempts } = studentIds.length
-    ? await supabase.from('attempts').select('*').in('student_id', studentIds).order('created_at', { ascending: false })
+    ? await admin.from('attempts').select('*').in('student_id', studentIds).order('created_at', { ascending: false })
     : { data: [] };
 
   const topicStats = (topics ?? []).map((t) => {

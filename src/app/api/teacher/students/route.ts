@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionProfile } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export async function GET() {
   const profile = await getSessionProfile();
@@ -8,8 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = await createAdminClient();
+  const { data } = await admin
     .from('profiles')
     .select('id, email, display_name, teacher_id')
     .eq('role', 'student');
@@ -18,7 +18,14 @@ export async function GET() {
     (student) => student.teacher_id === profile.id || student.teacher_id === null,
   );
 
-  return NextResponse.json({ students });
+  return NextResponse.json({
+    students,
+    debug: {
+      profileId: profile.id,
+      totalFound: (data ?? []).length,
+      filteredCount: (students ?? []).length,
+    },
+  });
 }
 
 export async function PUT(request: Request) {
