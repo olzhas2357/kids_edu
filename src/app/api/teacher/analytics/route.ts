@@ -11,7 +11,11 @@ export async function GET() {
 
   const supabase = await createClient();
 
-  const { data: students } = await supabase.from('profiles').select('id, email, display_name').eq('role', 'student');
+  const { data: students } = await supabase
+    .from('profiles')
+    .select('id, email, display_name')
+    .eq('role', 'student')
+    .eq('teacher_id', profile.id);
   const { data: topics } = await supabase
     .from('topics')
     .select('id, title, order_index')

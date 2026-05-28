@@ -20,12 +20,12 @@ export function canUnlockNextTopic(percent: number): boolean {
 }
 
 export function getStatusLabel(percent: number | null, completed: boolean): string {
-  if (completed) return 'Завершено';
-  if (percent === null) return 'Не начато';
-  if (percent < 50) return 'Не усвоено';
-  if (percent < 70) return 'Нужен повтор';
-  if (percent < 85) return 'Допущен';
-  return 'Отлично';
+  if (completed) return 'Аяқталды';
+  if (percent === null) return 'Басталмады';
+  if (percent < 50) return 'Қайталау қажет';
+  if (percent < 70) return 'Тақырыпты қайталау ұсынылады';
+  if (percent < 85) return 'Жақсы';
+  return 'Өте жақсы';
 }
 
 export function calcPercent(score: number, total: number): number {

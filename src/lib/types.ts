@@ -8,6 +8,7 @@ export interface Profile {
   email: string;
   display_name: string | null;
   role: UserRole;
+  teacher_id?: string | null;
 }
 
 export interface CoursePath {

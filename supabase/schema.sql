@@ -7,6 +7,7 @@ create table if not exists public.profiles (
   email text not null,
   display_name text,
   role text not null check (role in ('teacher', 'student')),
+  teacher_id uuid references public.profiles (id),
   created_at timestamptz not null default now()
 );
 
@@ -133,12 +134,13 @@ create table if not exists public.final_progress (
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, email, display_name, role)
+  insert into public.profiles (id, email, display_name, role, teacher_id)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'role', 'student')
+    coalesce(new.raw_user_meta_data->>'role', 'student'),
+    (new.raw_user_meta_data->>'teacher_id')::uuid
   );
   return new;
 end;
