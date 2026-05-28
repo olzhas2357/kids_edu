@@ -31,10 +31,10 @@ export default function TeacherDashboardPage() {
           <p className="text-sm text-slate-500">Тақырыптар</p>
           <p className="text-3xl font-bold">{stats?.topicStats?.length ?? 8}</p>
         </Card>
-        <Card>
-          <p className="text-sm text-slate-500">Әлсіз оқушылар</p>
+        {/* <Card>
+          <p className="text-sm text-slate-500">лар</p>
           <p className="text-3xl font-bold">{stats?.weakStudents?.length ?? '—'}</p>
-        </Card>
+        </Card> */}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
